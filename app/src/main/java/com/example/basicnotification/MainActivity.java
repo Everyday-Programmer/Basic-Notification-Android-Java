@@ -12,6 +12,16 @@ import androidx.core.app.NotificationCompat;
 import com.google.android.material.button.MaterialButton;
 
 public class MainActivity extends AppCompatActivity {
+    private final ActivityResultLauncher<String> activityResultLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+        @Override
+        public void onActivityResult(Boolean o) {
+            if (o) {
+                Toast.makeText(MainActivity.this, "Post notification permission granted", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(MainActivity.this, "Post notification permission not granted", Toast.LENGTH_SHORT).show();
+            }
+        }
+    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,15 +40,21 @@ public class MainActivity extends AppCompatActivity {
         postNotification.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    CharSequence name = getString(R.string.app_name);
-                    String description = "Example Notification";
-                    int importance = NotificationManager.IMPORTANCE_DEFAULT;
-                    NotificationChannel channel = new NotificationChannel("test", name, importance);
-                    channel.setDescription(description);
-                    notificationManager.createNotificationChannel(channel);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                        activityResultLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                    }
+                } else {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        CharSequence name = getString(R.string.app_name);
+                        String description = "Example Notification";
+                        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+                        NotificationChannel channel = new NotificationChannel("test", name, importance);
+                        channel.setDescription(description);
+                        notificationManager.createNotificationChannel(channel);
 
-                    notificationManager.notify(10, builder.build());
+                        notificationManager.notify(10, builder.build());
+                    }
                 }
             }
         });
